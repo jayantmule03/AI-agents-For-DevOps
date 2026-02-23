@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  # Nginx web server - healthy container
+  demo-nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "8000:80"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+    labels:
+      demo: "web-server"
+      purpose: "Runing Demo nginx server"
+
+  # Redis cache - generates logs
+  demo-redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --loglevel verbose
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+    labels:
+      demo: "cache"
+      purpose: "Redis collect verbose logging"
+
+  # Python app that generates logs continuously
+  demo-logger:
+    image: python:3.11-alpine
+    container_name: demo-logger
+    command: >
+      sh -c "
+      while true; do
+        echo '[INFO] Processing request #'$$RANDOM' at '$(date);
+        sleep 2;
+        echo '[DEBUG] Cache hit ratio: '$$((RANDOM % 100))'%';
+        sleep 1;
+        echo '[WARN] High memory usage detected: '$$((RANDOM % 100))'%';
+        sleep 3;
+        if [ $$((RANDOM % 10)) -eq 0 ]; then
+          echo '[ERROR] Connection timeout to database';
+        fi;
+        sleep 2;
+      done
+      "
+    restart: unless-stopped
+    labels:
+      demo: "app"
+      purpose: "Generates continuous logs for demo"
