@@ -9,8 +9,6 @@ from datetime import datetime
 from typing import List, Dict, Optional, Any
 from enum import Enum
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 from argocd_monitor.config import (
     ARGOCD_SERVER,
     ARGOCD_AUTH_TOKEN,
@@ -555,3 +553,4 @@ class ArgoCDClientWrapper:
         except requests.exceptions.RequestException as e:
             logger.error(f"Failed to get events for {app_name}: {e}")
             return []
+
